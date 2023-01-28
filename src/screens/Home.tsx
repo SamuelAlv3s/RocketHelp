@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Heading,
   HStack,
@@ -16,55 +16,23 @@ import { SignOut, ChatTeardropText } from "phosphor-react-native";
 import { useTheme } from "native-base";
 
 import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
 import Logo from "../assets/logo_secondary.svg";
 import { Filter } from "../components/Filter";
 import { Order, OrderProps } from "../components/Order";
 import { Button } from "../components/Button";
 import { Alert } from "react-native";
+import { dateFormat } from "../utils/firestoreDateFOrmat";
+import { Loading } from "../components/Loading";
 
 export function Home() {
   const [statusSelected, setStatusSelected] = useState<"open" | "closed">(
     "open"
   );
-  const [orders, setOrders] = useState<OrderProps[]>([
-    {
-      id: "6",
-      patrimony: "123456",
-      when: "26/01/2023 às 21:37",
-      status: "open",
-    },
-    {
-      id: "1",
-      patrimony: "123456",
-      when: "26/01/2023 às 21:37",
-      status: "open",
-    },
-    {
-      id: "2",
-      patrimony: "123456",
-      when: "26/01/2023 às 21:37",
-      status: "closed",
-    },
-    {
-      id: "3",
-      patrimony: "123456",
-      when: "26/01/2023 às 21:37",
-      status: "closed",
-    },
-    {
-      id: "4",
-      patrimony: "123456",
-      when: "26/01/2023 às 21:37",
-      status: "open",
-    },
-    {
-      id: "5",
-      patrimony: "123456",
-      when: "26/01/2023 às 21:37",
-      status: "open",
-    },
-  ]);
+  const [orders, setOrders] = useState<OrderProps[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
 
   const { colors } = useTheme();
 
@@ -86,6 +54,31 @@ export function Home() {
         Alert.alert("Sair", "Ocorreu um erro ao sair");
       });
   }
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    const subscriber = firestore()
+      .collection("orders")
+      .where("status", "==", statusSelected)
+      .onSnapshot((snapshot) => {
+        const data = snapshot.docs.map((doc) => {
+          const { patrimony, description, status, created_at } = doc.data();
+          return {
+            id: doc.id,
+            patrimony,
+            description,
+            status,
+            when: dateFormat(created_at),
+          } as OrderProps;
+        });
+
+        setOrders(data);
+        setIsLoading(false);
+      });
+
+    return subscriber;
+  }, [statusSelected]);
 
   return (
     <VStack flex={1} pb={6} bg="gray.700">
@@ -131,27 +124,36 @@ export function Home() {
           />
         </HStack>
 
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Order data={item} onPress={() => handleOpenDetails(item.id)} />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 50 }}
-          ListEmptyComponent={() => {
-            return (
-              <Center>
-                <ChatTeardropText size={40} color={colors.gray[300]} />
-                <Text color="gray.300" mt={6} fontSize="xl" textAlign="center">
-                  Você ainda não possui {"\n"}
-                  solicitações{" "}
-                  {statusSelected === "open" ? "em andamento" : "finalizadas"}
-                </Text>
-              </Center>
-            );
-          }}
-        />
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <FlatList
+            data={orders}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Order data={item} onPress={() => handleOpenDetails(item.id)} />
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 50 }}
+            ListEmptyComponent={() => {
+              return (
+                <Center>
+                  <ChatTeardropText size={40} color={colors.gray[300]} />
+                  <Text
+                    color="gray.300"
+                    mt={6}
+                    fontSize="xl"
+                    textAlign="center"
+                  >
+                    Você ainda não possui {"\n"}
+                    solicitações{" "}
+                    {statusSelected === "open" ? "em andamento" : "finalizadas"}
+                  </Text>
+                </Center>
+              );
+            }}
+          />
+        )}
 
         <Button title="Nova Solicitação" onPress={handleNewOrder} />
       </VStack>
