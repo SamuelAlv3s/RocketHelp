@@ -9,6 +9,8 @@ import {
   Center,
 } from "native-base";
 
+import { useNavigation } from "@react-navigation/native";
+
 import { SignOut, ChatTeardropText } from "phosphor-react-native";
 
 import { useTheme } from "native-base";
@@ -23,45 +25,56 @@ export function Home() {
     "open"
   );
   const [orders, setOrders] = useState<OrderProps[]>([
-    // {
-    //   id: "6",
-    //   patrimony: "123456",
-    //   when: "26/01/2023 às 21:37",
-    //   status: "open",
-    // },
-    // {
-    //   id: "1",
-    //   patrimony: "123456",
-    //   when: "26/01/2023 às 21:37",
-    //   status: "open",
-    // },
-    // {
-    //   id: "2",
-    //   patrimony: "123456",
-    //   when: "26/01/2023 às 21:37",
-    //   status: "closed",
-    // },
-    // {
-    //   id: "3",
-    //   patrimony: "123456",
-    //   when: "26/01/2023 às 21:37",
-    //   status: "closed",
-    // },
-    // {
-    //   id: "4",
-    //   patrimony: "123456",
-    //   when: "26/01/2023 às 21:37",
-    //   status: "open",
-    // },
-    // {
-    //   id: "5",
-    //   patrimony: "123456",
-    //   when: "26/01/2023 às 21:37",
-    //   status: "open",
-    // },
+    {
+      id: "6",
+      patrimony: "123456",
+      when: "26/01/2023 às 21:37",
+      status: "open",
+    },
+    {
+      id: "1",
+      patrimony: "123456",
+      when: "26/01/2023 às 21:37",
+      status: "open",
+    },
+    {
+      id: "2",
+      patrimony: "123456",
+      when: "26/01/2023 às 21:37",
+      status: "closed",
+    },
+    {
+      id: "3",
+      patrimony: "123456",
+      when: "26/01/2023 às 21:37",
+      status: "closed",
+    },
+    {
+      id: "4",
+      patrimony: "123456",
+      when: "26/01/2023 às 21:37",
+      status: "open",
+    },
+    {
+      id: "5",
+      patrimony: "123456",
+      when: "26/01/2023 às 21:37",
+      status: "open",
+    },
   ]);
 
   const { colors } = useTheme();
+
+  const navigation = useNavigation();
+
+  function handleNewOrder() {
+    navigation.navigate("new");
+  }
+
+  function handleOpenDetails(orderId: string) {
+    navigation.navigate("details", { orderId });
+  }
+
   return (
     <VStack flex={1} pb={6} bg="gray.700">
       <HStack
@@ -106,7 +119,9 @@ export function Home() {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <Order data={item} />}
+          renderItem={({ item }) => (
+            <Order data={item} onPress={() => handleOpenDetails(item.id)} />
+          )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 50 }}
           ListEmptyComponent={() => {
@@ -123,7 +138,7 @@ export function Home() {
           }}
         />
 
-        <Button title="Nova Solicitação" />
+        <Button title="Nova Solicitação" onPress={handleNewOrder} />
       </VStack>
     </VStack>
   );
